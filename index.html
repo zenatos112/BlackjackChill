@@ -26,7 +26,9 @@
         .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.3); transition: 0.1s; }
         .chip:active { transform: translateY(3px); box-shadow: none; }
         
-        #win-display { font-size: 2.5rem; color: var(--gold); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 10px black; }
+        #win-display { font-size: 2.2rem; font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 10px black; }
+        .win-text { color: var(--gold); }
+        .lose-text { color: var(--red); }
         .mossa-tag { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
     </style>
 </head>
@@ -88,6 +90,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // CONFIGURAZIONE FIREBASE - Sostituisci con la tua
         const firebaseConfig = {
             apiKey: "AIzaSyAbVr_9KaVqly_rEBOrS1HeAvl6HuvgmrA",
             authDomain: "blackjackfish-322d3.firebaseapp.com",
@@ -121,6 +124,7 @@
                 for(let p in players) {
                     updates[`stanze/${currentStanza}/giocatori/${p}/mossa`] = "Pronto";
                     updates[`stanze/${currentStanza}/giocatori/${p}/puntata`] = 0;
+                    updates[`stanze/${currentStanza}/giocatori/${p}/ultimoPremio`] = 0;
                 }
                 await update(ref(db), updates);
             }
@@ -142,6 +146,7 @@
                         Mossa: <span class="mossa-tag">${data[p].mossa}</span><br><br>
                         <button class="btn btn-win" onclick="paga('${p}',${data[p].puntata},'Vinto')">WIN</button>
                         <button class="btn btn-lose" onclick="paga('${p}',${data[p].puntata},'Perso')">LOSE</button>
+                        <button class="btn btn-bj" onclick="paga('${p}',${data[p].puntata},'BJ')">BJ</button>
                     </div>`;
                 }
             });
@@ -150,9 +155,23 @@
         window.paga = async function(pID, pnt, esito) {
             const snap = await get(ref(db, `stanze/${currentStanza}/giocatori/${pID}`));
             const cur = snap.val().fish;
-            const finale = (esito === 'Vinto') ? cur + parseInt(pnt) : cur - parseInt(pnt);
+            const pntInt = parseInt(pnt);
+            let finale, premio;
+
+            if (esito === 'Vinto') {
+                premio = pntInt;
+                finale = cur + pntInt;
+            } else if (esito === 'Perso') {
+                premio = -pntInt;
+                finale = cur - pntInt;
+            } else if (esito === 'BJ') {
+                // BJ: paga il doppio + metà del doppio (2.5x)
+                premio = Math.floor(pntInt * 1.5); // Vinci 1.5x oltre alla puntata, totale 2.5x
+                finale = cur + premio;
+            }
+
             update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { 
-                fish: finale, mossa: "PAGATO: " + esito, puntata: 0 
+                fish: finale, mossa: "PAGATO", ultimoPremio: premio, puntata: 0 
             });
         }
 
@@ -162,7 +181,9 @@
             currentStanza = document.getElementById('join-id').value;
             if(!user || !currentStanza) return alert("Metti nome e ID!");
             myID = user + "_" + Math.floor(Math.random()*99);
-            set(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { nome: user, fish: 500, puntata: 0, mossa: 'Entrato' });
+            set(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { 
+                nome: user, fish: 500, puntata: 0, mossa: 'Entrato', ultimoPremio: 0 
+            });
             document.getElementById('my-display-name').innerText = user;
             mostraSchermata('screen-giocatore');
             ascoltaStato(currentStanza);
@@ -195,10 +216,19 @@
                 document.getElementById('my-money').innerText = wallet;
                 document.getElementById('display-confirmed-bet').innerText = confirmedBet;
                 
-                if(d.mossa.includes("PAGATO")) {
+                if(d.mossa === "PAGATO") {
                     const wd = document.getElementById('win-display');
-                    wd.innerText = d.mossa;
                     wd.classList.remove('hidden');
+                    const p = parseInt(d.ultimoPremio);
+                    if (p > 0) {
+                        // Vinto (o BJ)
+                        wd.innerHTML = `<span class="win-text">VINTI: +${p}€</span>`;
+                    } else if (p < 0) {
+                        // Perso
+                        wd.innerHTML = `<span class="lose-text">PERSO: ${p}€</span>`;
+                    } else {
+                        wd.innerHTML = `Puntata Rimborsata`;
+                    }
                     document.getElementById('area-puntata').classList.add('hidden');
                     document.getElementById('area-wait').classList.add('hidden');
                 }
