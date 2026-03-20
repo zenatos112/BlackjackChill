@@ -90,7 +90,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // CONFIGURAZIONE FIREBASE - Sostituisci con la tua
         const firebaseConfig = {
             apiKey: "AIzaSyAbVr_9KaVqly_rEBOrS1HeAvl6HuvgmrA",
             authDomain: "blackjackfish-322d3.firebaseapp.com",
@@ -156,22 +155,24 @@
             const snap = await get(ref(db, `stanze/${currentStanza}/giocatori/${pID}`));
             const cur = snap.val().fish;
             const pntInt = parseInt(pnt);
-            let finale, premio;
+            let finale, premio, mossaTesto;
 
             if (esito === 'Vinto') {
                 premio = pntInt;
                 finale = cur + pntInt;
+                mossaTesto = `Pagato (+${premio}€)`;
             } else if (esito === 'Perso') {
                 premio = -pntInt;
                 finale = cur - pntInt;
+                mossaTesto = `Pagato (${premio}€)`;
             } else if (esito === 'BJ') {
-                // BJ: paga il doppio + metà del doppio (2.5x)
-                premio = Math.floor(pntInt * 1.5); // Vinci 1.5x oltre alla puntata, totale 2.5x
+                premio = Math.floor(pntInt * 1.5);
                 finale = cur + premio;
+                mossaTesto = `Pagato (+${premio}€)`;
             }
 
             update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { 
-                fish: finale, mossa: "PAGATO", ultimoPremio: premio, puntata: 0 
+                fish: finale, mossa: mossaTesto, ultimoPremio: premio, puntata: 0 
             });
         }
 
@@ -216,15 +217,13 @@
                 document.getElementById('my-money').innerText = wallet;
                 document.getElementById('display-confirmed-bet').innerText = confirmedBet;
                 
-                if(d.mossa === "PAGATO") {
+                if(d.mossa.includes("Pagato")) {
                     const wd = document.getElementById('win-display');
                     wd.classList.remove('hidden');
                     const p = parseInt(d.ultimoPremio);
                     if (p > 0) {
-                        // Vinto (o BJ)
                         wd.innerHTML = `<span class="win-text">VINTI: +${p}€</span>`;
                     } else if (p < 0) {
-                        // Perso
                         wd.innerHTML = `<span class="lose-text">PERSO: ${p}€</span>`;
                     } else {
                         wd.innerHTML = `Puntata Rimborsata`;
