@@ -7,7 +7,7 @@
     <style>
         :root { 
             --gold: #f1c40f; --table-green: #1a5e3a; --red: #e74c3c; 
-            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.7);
+            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.6);
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--table-green); color: white; text-align: center; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
@@ -20,8 +20,10 @@
         .btn-lose { background: var(--red); color: white; }
         .btn-bj { background: var(--gold); color: black; }
         input { padding: 12px; border-radius: 8px; border: none; margin: 10px; text-align: center; width: 80%; max-width: 300px; font-size: 1rem; }
-        .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.3); }
-        #win-display { font-size: 2.5rem; color: var(--gold); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 10px black; }
+        .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.3); transition: 0.1s; }
+        .chip:active { transform: translateY(3px); box-shadow: none; }
+        #win-display { font-size: 2.5rem; color: var(--gold); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 10px black; animation: pop 0.3s ease-out; }
+        @keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -41,7 +43,7 @@
     <div id="screen-banco" class="hidden">
         <div class="card">
             <h2>BANCO - Stanza: <span id="display-id-banco" style="color:var(--gold)"></span></h2>
-            <button class="btn btn-banco" onclick="nuovoRound()">🔥 INIZIA NUOVO ROUND 🔥</button>
+            <button class="btn btn-banco" onclick="nuovoRound()">🔥 PROSSIMO ROUND 🔥</button>
         </div>
         <div id="lista-giocatori-banco"></div>
     </div>
@@ -96,7 +98,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        let myID = "", username = "", currentStanza = "", myWallet = 500, tempBet = 0, currentGlobalStato = "";
+        let myID = "", username = "", currentStanza = "", myWallet = 500, tempBet = 0;
 
         // --- BANCO ---
         window.creaStanza = function() {
@@ -110,7 +112,7 @@
         }
 
         window.nuovoRound = async function() {
-            // 1. Reset mosse giocatori sul DB
+            // Sincronizzazione atomica: reset dei giocatori PRIMA di cambiare stato
             const snap = await get(ref(db, `stanze/${currentStanza}/giocatori`));
             const players = snap.val();
             if(players) {
@@ -121,7 +123,7 @@
                 }
                 await update(ref(db), updates);
             }
-            // 2. Cambia stato in PUNTATE
+            // Solo ora diciamo a tutti di puntare
             await update(ref(db, 'stanze/' + currentStanza), { stato: 'PUNTATE' });
         }
 
@@ -168,12 +170,13 @@
         }
 
         function ascoltaStatoRound(id) {
+            // Ascolta lo stato del round
             onValue(ref(db, `stanze/${id}/stato`), (snap) => {
-                currentGlobalStato = snap.val();
-                document.getElementById('round-status').innerText = currentGlobalStato;
+                const s = snap.val();
+                document.getElementById('round-status').innerText = s;
                 
-                if(currentGlobalStato === 'PUNTATE') {
-                    // RESET TOTALE E FORZATO
+                if(s === 'PUNTATE') {
+                    // RESET TOTALE DELL'INTERFACCIA
                     document.getElementById('win-display').classList.add('hidden');
                     document.getElementById('area-azioni').classList.add('hidden');
                     document.getElementById('area-puntata').classList.remove('hidden');
@@ -182,18 +185,21 @@
                 }
             });
 
+            // Ascolta i propri dati
             onValue(ref(db, `stanze/${id}/giocatori/${myID}`), (snap) => {
                 const data = snap.val();
                 if(!data) return;
                 myWallet = data.fish;
                 document.getElementById('my-money').innerText = myWallet;
                 
-                // MOSTRA VINCITA SOLO SE NON SIAMO IN FASE PUNTATE
-                if(currentGlobalStato !== 'PUNTATE' && data.mossa && data.mossa.includes("PAGATO")) {
-                    const winDisp = document.getElementById('win-display');
+                const winDisp = document.getElementById('win-display');
+                const areaP = document.getElementById('area-puntata');
+
+                // Mostra vincita SOLO se il banco ha pagato E non siamo in fase puntate
+                if(data.mossa && data.mossa.includes("PAGATO")) {
                     winDisp.innerText = data.mossa;
                     winDisp.classList.remove('hidden');
-                    document.getElementById('area-puntata').classList.add('hidden');
+                    areaP.classList.add('hidden');
                     document.getElementById('area-azioni').classList.add('hidden');
                 }
             });
