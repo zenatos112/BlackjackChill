@@ -6,115 +6,42 @@
     <title>Blackjack Deadland Edition</title>
     <style>
         :root { 
-            --gold: #f1c40f; 
-            --table-green: #1a5e3a; 
-            --red: #e74c3c; 
-            --dark-green: #0b2b1a; 
-            --ui-panel: rgba(0, 0, 0, 0.4);
+            --gold: #f1c40f; --table-green: #1a5e3a; --red: #e74c3c; 
+            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.5);
         }
-        
-        body { 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
-            background: var(--table-green); 
-            color: white; 
-            text-align: center; 
-            margin: 0; 
-            padding: 20px;
-            overflow-x: hidden;
-        }
-
+        body { font-family: 'Segoe UI', sans-serif; background: var(--table-green); color: white; text-align: center; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
-
-        /* Bottoni */
-        .btn { 
-            padding: 12px 20px; 
-            margin: 5px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            text-transform: uppercase;
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .btn:active { transform: translateY(3px); box-shadow: none; }
-        .btn-main { background: #2ecc71; color: white; font-size: 1.1rem; box-shadow: 0 4px #27ae60; }
+        .card { background: var(--ui-panel); padding: 20px; border-radius: 15px; margin: 15px auto; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
+        .btn { padding: 12px 20px; margin: 5px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        .btn-main { background: #2ecc71; color: white; box-shadow: 0 4px #27ae60; }
         .btn-banco { background: #3498db; color: white; box-shadow: 0 4px #2980b9; }
         .btn-win { background: #27ae60; color: white; }
         .btn-lose { background: var(--red); color: white; }
         .btn-bj { background: var(--gold); color: black; }
-
-        /* Card e Input */
-        .card { 
-            background: var(--ui-panel); 
-            padding: 20px; 
-            border-radius: 15px; 
-            margin: 15px auto; 
-            max-width: 500px; 
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(5px);
-        }
-        input { 
-            padding: 12px; 
-            border-radius: 8px; 
-            border: none; 
-            margin: 10px; 
-            text-align: center; 
-            width: 80%; 
-            max-width: 300px;
-        }
-
-        /* Chips */
-        .chip { 
-            width: 65px; 
-            height: 65px; 
-            border-radius: 50%; 
-            border: 4px dashed white; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 1.1rem;
-            box-shadow: 0 5px 0 rgba(0,0,0,0.4);
-            transition: 0.1s;
-        }
-        .chip:hover { transform: scale(1.05); }
-
-        /* Display Vincita */
-        #win-display { 
-            font-size: 2.5rem; 
-            color: var(--gold); 
-            font-weight: 900; 
-            margin: 30px 0; 
-            text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        input { padding: 12px; border-radius: 8px; border: none; margin: 10px; text-align: center; width: 80%; max-width: 300px; }
+        .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.3); }
+        #win-display { font-size: 2.2rem; color: var(--gold); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 5px black; }
     </style>
 </head>
 <body>
 
-    <h1>🃏 Blackjack Chill 🃏</h1>
+    <h1>🃏 Blackjack Deadland 🃏</h1>
 
     <div id="screen-home" class="card">
         <input type="text" id="user-name" placeholder="IL TUO NOME">
         <br>
         <button class="btn btn-main" onclick="creaStanza()">CREA STANZA (BANCO)</button>
-        <div style="margin: 20px; opacity: 0.5;">— OPPURE —</div>
-        <input type="number" id="join-id" placeholder="ID STANZA 4 CIFRE">
+        <hr style="opacity:0.2">
+        <input type="number" id="join-id" placeholder="ID 4 CIFRE">
         <br>
-        <button class="btn btn-main" style="background:#9b59b6; box-shadow: 0 4px #8e44ad;" onclick="entraStanza()">ENTRA IN STANZA</button>
+        <button class="btn btn-main" style="background:#9b59b6" onclick="entraStanza()">ENTRA IN STANZA</button>
     </div>
 
     <div id="screen-banco" class="hidden">
         <div class="card">
             <h2>BANCO - Stanza: <span id="display-id-banco" style="color:var(--gold)"></span></h2>
-            <button id="btn-start-round" class="btn btn-banco" onclick="setStatoRound('PUNTATE')">INIZIA NUOVO ROUND</button>
+            <button class="btn btn-banco" onclick="nuovoRound()">🔥 INIZIA NUOVO ROUND 🔥</button>
         </div>
         <div id="lista-giocatori-banco"></div>
     </div>
@@ -122,7 +49,7 @@
     <div id="screen-giocatore" class="hidden">
         <div class="card">
             <h3><span id="my-display-name"></span> | Budget: <span id="my-money" style="color:var(--gold)">500</span>€</h3>
-            <p>Stato Round: <b id="round-status" style="text-transform:uppercase">ATTESA...</b></p>
+            <p>STATO: <b id="round-status">ATTESA</b></p>
         </div>
         
         <div id="win-display" class="hidden"></div>
@@ -136,17 +63,17 @@
                 <div class="chip" style="background:orange" onclick="aggiungiPuntata(50)">50</div>
                 <div class="chip" style="background:black" onclick="aggiungiPuntata(100)">100</div>
             </div>
-            <h4 style="font-size: 1.5rem">Puntata: <span id="current-bet">0</span>€</h4>
+            <h4>Puntata: <span id="current-bet">0</span>€</h4>
             <button class="btn btn-bj" onclick="allIn()">ALL-IN 🚀</button>
-            <button id="btn-confirm-bet" class="btn btn-win" onclick="confermaPuntata()">CONFERMA PUNTATA</button>
+            <button class="btn btn-win" onclick="confermaPuntata()">CONFERMA PUNTATA</button>
             <br>
-            <button class="btn btn-lose" style="padding: 5px 10px; font-size: 0.7rem; margin-top: 15px;" onclick="resetPuntataLocal()">RESET FISH</button>
+            <button class="btn btn-lose" style="font-size:0.7rem; margin-top:10px" onclick="resetPuntataLocal()">RESET FISH</button>
         </div>
 
         <div id="area-azioni" class="hidden">
             <div class="card">
-                <p>Puntata piazzata! Aspetta il Banco.</p>
-                <button class="btn btn-banco" onclick="mossaSpeciale('RADDOPPIA')">RADDOPPIA 2x</button>
+                <p>Puntata piazzata! Attendi le carte.</p>
+                <button class="btn btn-banco" onclick="mossaSpeciale('RADDOPPIA')">RADDOPPIA</button>
                 <button class="btn btn-banco" onclick="mossaSpeciale('ASSICURAZIONE')">ASSICURAZIONE</button>
             </div>
         </div>
@@ -154,29 +81,24 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
-          apiKey: "AIzaSyAbVr_9KaVqly_rEBOrS1HeAvl6HuvgmrA",
-          authDomain: "blackjackfish-322d3.firebaseapp.com",
-          projectId: "blackjackfish-322d3",
-          databaseURL: "https://blackjackfish-322d3-default-rtdb.europe-west1.firebasedatabase.app",
-          storageBucket: "blackjackfish-322d3.firebasestorage.app",
-          messagingSenderId: "1069692511591",
-          appId: "1:1069692511591:web:8cc83e24c442dc49a43bc2",
-          measurementId: "G-WLGNT9T7KY"
+            apiKey: "AIzaSyAbVr_9KaVqly_rEBOrS1HeAvl6HuvgmrA",
+            authDomain: "blackjackfish-322d3.firebaseapp.com",
+            projectId: "blackjackfish-322d3",
+            databaseURL: "https://blackjackfish-322d3-default-rtdb.europe-west1.firebasedatabase.app",
+            storageBucket: "blackjackfish-322d3.firebasestorage.app",
+            messagingSenderId: "1069692511591",
+            appId: "1:1069692511591:web:8cc83e24c442dc49a43bc2"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        let myID = "";
-        let username = "";
-        let currentStanza = "";
-        let myWallet = 500;
-        let tempBet = 0;
+        let myID = "", username = "", currentStanza = "", myWallet = 500, tempBet = 0;
 
-        // --- BANCO ---
+        // --- FUNZIONI BANCO ---
         window.creaStanza = function() {
             username = document.getElementById('user-name').value || "Banco";
             const id = Math.floor(1000 + Math.random() * 9000).toString();
@@ -187,20 +109,19 @@
             ascoltaGiocatori(id);
         }
 
-        window.setStatoRound = function(stato) {
-            update(ref(db, 'stanze/' + currentStanza), { stato: stato });
-            if(stato === 'PUNTATE') {
-                // Reset automatico dei dati giocatori sul DB per il nuovo round
-                onValue(ref(db, `stanze/${currentStanza}/giocatori`), (snap) => {
-                    const players = snap.val();
-                    for(let p in players) {
-                        update(ref(db, `stanze/${currentStanza}/giocatori/${p}`), { 
-                            puntata: 0, 
-                            mossa: "Puntando..." 
-                        });
-                    }
-                }, { onlyOnce: true });
+        window.nuovoRound = async function() {
+            // Pulizia sincronizzata: prima azzero i giocatori, poi cambio stato
+            const snap = await get(ref(db, `stanze/${currentStanza}/giocatori`));
+            const players = snap.val();
+            if(players) {
+                const updates = {};
+                for(let p in players) {
+                    updates[`stanze/${currentStanza}/giocatori/${p}/puntata`] = 0;
+                    updates[`stanze/${currentStanza}/giocatori/${p}/mossa`] = "Puntando...";
+                }
+                await update(ref(db), updates);
             }
+            await update(ref(db, 'stanze/' + currentStanza), { stato: 'PUNTATE' });
         }
 
         function ascoltaGiocatori(id) {
@@ -211,66 +132,51 @@
                 if(!data) return;
                 for(let p in data) {
                     const player = data[p];
-                    list.innerHTML += `
-                        <div class="card">
-                            <b style="font-size:1.2rem">${player.nome}</b><br>
-                            Budget: ${player.fish}€ | Puntata: <b style="color:var(--gold)">${player.puntata}€</b><br>
-                            <i>Mossa: ${player.mossa}</i><br><br>
-                            <button class="btn btn-bj" onclick="risultato('${p}', 'BJ', ${player.puntata})">BJ</button>
-                            <button class="btn btn-win" onclick="risultato('${p}', 'WIN', ${player.puntata})">VINTO</button>
-                            <button class="btn btn-lose" onclick="risultato('${p}', 'LOSE', ${player.puntata})">PERSO</button>
-                        </div>`;
+                    list.innerHTML += `<div class="card">
+                        <b>${player.nome}</b> [${player.fish}€] | Punta: <b>${player.puntata}€</b><br>
+                        <i>Mossa: ${player.mossa}</i><br><br>
+                        <button class="btn btn-bj" onclick="risultato('${p}', 'BJ', ${player.puntata})">BJ</button>
+                        <button class="btn btn-win" onclick="risultato('${p}', 'WIN', ${player.puntata})">WIN</button>
+                        <button class="btn btn-lose" onclick="risultato('${p}', 'LOSE', ${player.puntata})">LOSE</button>
+                    </div>`;
                 }
             });
         }
 
-        window.risultato = function(pID, esito, pnt) {
-            const pRef = ref(db, `stanze/${currentStanza}/giocatori/${pID}`);
-            onValue(pRef, (snap) => {
-                let cur = snap.val().fish;
-                let vince = 0;
-                if(esito === 'BJ') vince = Math.floor(pnt * 1.5);
-                else if(esito === 'WIN') vince = parseInt(pnt);
-                else if(esito === 'LOSE') vince = -parseInt(pnt);
-                
-                update(pRef, { 
-                    fish: cur + vince, 
-                    puntata: 0, 
-                    mossa: "PAGATO: " + vince + "€"
-                });
-            }, { onlyOnce: true });
+        window.risultato = async function(pID, esito, pnt) {
+            const snap = await get(ref(db, `stanze/${currentStanza}/giocatori/${pID}`));
+            const cur = snap.val().fish;
+            let vince = 0;
+            if(esito === 'BJ') vince = Math.floor(pnt * 1.5);
+            else if(esito === 'WIN') vince = parseInt(pnt);
+            else vince = -parseInt(pnt);
+
+            update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { 
+                fish: cur + vince, 
+                puntata: 0, 
+                mossa: "PAGATO: " + vince + "€" 
+            });
         }
 
-        // --- GIOCATORE ---
+        // --- FUNZIONI GIOCATORE ---
         window.entraStanza = function() {
             username = document.getElementById('user-name').value;
-            if(!username) return alert("Scegli un nome prima!");
-            const id = document.getElementById('join-id').value;
-            if(id.length !== 4) return alert("ID Stanza non valido.");
-            
-            currentStanza = id;
-            myID = username + "_" + Math.floor(Math.random() * 1000);
+            if(!username) return alert("Inserisci un nome!");
+            currentStanza = document.getElementById('join-id').value;
+            myID = username + "_" + Math.floor(Math.random() * 999);
+            update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { nome: username, fish: 500, puntata: 0, mossa: "In attesa" });
             document.getElementById('my-display-name').innerText = username;
-            
-            update(ref(db, `stanze/${id}/giocatori/${myID}`), {
-                nome: username,
-                fish: 500,
-                puntata: 0,
-                mossa: "Entrato"
-            });
-
             mostraSchermata('screen-giocatore');
-            ascoltaStatoRound(id);
+            ascoltaStatoRound(currentStanza);
         }
 
         function ascoltaStatoRound(id) {
-            // Ascolta Cambiamento Stato (Banco preme tasti)
             onValue(ref(db, `stanze/${id}/stato`), (snap) => {
                 const s = snap.val();
                 document.getElementById('round-status').innerText = s;
                 
                 if(s === 'PUNTATE') {
-                    // SE IL BANCO APRE LE PUNTATE, RESET INTERFACCIA
+                    // RESET FORZATO UI
                     document.getElementById('area-puntata').classList.remove('hidden');
                     document.getElementById('area-azioni').classList.add('hidden');
                     document.getElementById('win-display').classList.add('hidden');
@@ -279,14 +185,12 @@
                 }
             });
 
-            // Ascolta Dati Personali (Fish e Vincite)
             onValue(ref(db, `stanze/${id}/giocatori/${myID}`), (snap) => {
                 const data = snap.val();
                 if(!data) return;
                 myWallet = data.fish;
                 document.getElementById('my-money').innerText = myWallet;
                 
-                // Se il mossa contiene "PAGATO", mostriamo il bannerone
                 if(data.mossa && data.mossa.includes("PAGATO")) {
                     const winDisp = document.getElementById('win-display');
                     winDisp.innerText = data.mossa;
@@ -298,7 +202,7 @@
         }
 
         window.aggiungiPuntata = function(val) {
-            if(tempBet + val > myWallet) return alert("Budget esaurito!");
+            if(tempBet + val > myWallet) return;
             tempBet += val;
             document.getElementById('current-bet').innerText = tempBet;
         }
@@ -318,7 +222,7 @@
             if(tempBet <= 0) return alert("Punta qualcosa!");
             update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), {
                 puntata: tempBet,
-                mossa: "In gioco..."
+                mossa: "Ha puntato " + tempBet
             });
             document.getElementById('area-puntata').classList.add('hidden');
             document.getElementById('area-azioni').classList.remove('hidden');
@@ -329,9 +233,7 @@
         }
 
         function mostraSchermata(id) {
-            document.getElementById('screen-home').classList.add('hidden');
-            document.getElementById('screen-banco').classList.add('hidden');
-            document.getElementById('screen-giocatore').classList.add('hidden');
+            document.querySelectorAll('div[id^="screen-"]').forEach(s => s.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
     </script>
