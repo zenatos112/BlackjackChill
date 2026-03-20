@@ -7,11 +7,11 @@
     <style>
         :root { 
             --gold: #f1c40f; --table-green: #1a5e3a; --red: #e74c3c; 
-            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.5);
+            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.6);
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--table-green); color: white; text-align: center; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
-        .card { background: var(--ui-panel); padding: 20px; border-radius: 15px; margin: 15px auto; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
+        .card { background: var(--ui-panel); padding: 20px; border-radius: 15px; margin: 15px auto; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
         .btn { padding: 12px 20px; margin: 5px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
         .btn:active { transform: scale(0.95); }
         .btn-main { background: #2ecc71; color: white; box-shadow: 0 4px #27ae60; }
@@ -19,9 +19,11 @@
         .btn-win { background: #27ae60; color: white; }
         .btn-lose { background: var(--red); color: white; }
         .btn-bj { background: var(--gold); color: black; }
-        input { padding: 12px; border-radius: 8px; border: none; margin: 10px; text-align: center; width: 80%; max-width: 300px; }
-        .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.3); }
-        #win-display { font-size: 2.2rem; color: var(--gold); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 5px black; }
+        input { padding: 12px; border-radius: 8px; border: none; margin: 10px; text-align: center; width: 80%; max-width: 300px; font-size: 1rem; }
+        .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.3); transition: 0.1s; }
+        .chip:active { transform: translateY(3px); box-shadow: none; }
+        #win-display { font-size: 2.5rem; color: var(--gold); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 10px black; animation: pop 0.3s ease-out; }
+        @keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -32,7 +34,7 @@
         <input type="text" id="user-name" placeholder="IL TUO NOME">
         <br>
         <button class="btn btn-main" onclick="creaStanza()">CREA STANZA (BANCO)</button>
-        <hr style="opacity:0.2">
+        <hr style="opacity:0.2; margin: 20px;">
         <input type="number" id="join-id" placeholder="ID 4 CIFRE">
         <br>
         <button class="btn btn-main" style="background:#9b59b6" onclick="entraStanza()">ENTRA IN STANZA</button>
@@ -41,7 +43,7 @@
     <div id="screen-banco" class="hidden">
         <div class="card">
             <h2>BANCO - Stanza: <span id="display-id-banco" style="color:var(--gold)"></span></h2>
-            <button class="btn btn-banco" onclick="nuovoRound()">🔥 INIZIA NUOVO ROUND 🔥</button>
+            <button class="btn btn-banco" onclick="nuovoRound()">🔥 PROSSIMO ROUND 🔥</button>
         </div>
         <div id="lista-giocatori-banco"></div>
     </div>
@@ -49,7 +51,7 @@
     <div id="screen-giocatore" class="hidden">
         <div class="card">
             <h3><span id="my-display-name"></span> | Budget: <span id="my-money" style="color:var(--gold)">500</span>€</h3>
-            <p>STATO: <b id="round-status">ATTESA</b></p>
+            <p>Stato: <b id="round-status">IN ATTESA</b></p>
         </div>
         
         <div id="win-display" class="hidden"></div>
@@ -63,7 +65,7 @@
                 <div class="chip" style="background:orange" onclick="aggiungiPuntata(50)">50</div>
                 <div class="chip" style="background:black" onclick="aggiungiPuntata(100)">100</div>
             </div>
-            <h4>Puntata: <span id="current-bet">0</span>€</h4>
+            <h4>Puntata Corrente: <span id="current-bet">0</span>€</h4>
             <button class="btn btn-bj" onclick="allIn()">ALL-IN 🚀</button>
             <button class="btn btn-win" onclick="confermaPuntata()">CONFERMA PUNTATA</button>
             <br>
@@ -72,7 +74,7 @@
 
         <div id="area-azioni" class="hidden">
             <div class="card">
-                <p>Puntata piazzata! Attendi le carte.</p>
+                <p>Puntata inviata! Aspetta il Banco.</p>
                 <button class="btn btn-banco" onclick="mossaSpeciale('RADDOPPIA')">RADDOPPIA</button>
                 <button class="btn btn-banco" onclick="mossaSpeciale('ASSICURAZIONE')">ASSICURAZIONE</button>
             </div>
@@ -98,7 +100,7 @@
 
         let myID = "", username = "", currentStanza = "", myWallet = 500, tempBet = 0;
 
-        // --- FUNZIONI BANCO ---
+        // --- BANCO ---
         window.creaStanza = function() {
             username = document.getElementById('user-name').value || "Banco";
             const id = Math.floor(1000 + Math.random() * 9000).toString();
@@ -110,17 +112,18 @@
         }
 
         window.nuovoRound = async function() {
-            // Pulizia sincronizzata: prima azzero i giocatori, poi cambio stato
+            // Sincronizzazione atomica: reset dei giocatori PRIMA di cambiare stato
             const snap = await get(ref(db, `stanze/${currentStanza}/giocatori`));
             const players = snap.val();
             if(players) {
                 const updates = {};
                 for(let p in players) {
                     updates[`stanze/${currentStanza}/giocatori/${p}/puntata`] = 0;
-                    updates[`stanze/${currentStanza}/giocatori/${p}/mossa`] = "Puntando...";
+                    updates[`stanze/${currentStanza}/giocatori/${p}/mossa`] = "In attesa...";
                 }
                 await update(ref(db), updates);
             }
+            // Solo ora diciamo a tutti di puntare
             await update(ref(db, 'stanze/' + currentStanza), { stato: 'PUNTATE' });
         }
 
@@ -136,8 +139,8 @@
                         <b>${player.nome}</b> [${player.fish}€] | Punta: <b>${player.puntata}€</b><br>
                         <i>Mossa: ${player.mossa}</i><br><br>
                         <button class="btn btn-bj" onclick="risultato('${p}', 'BJ', ${player.puntata})">BJ</button>
-                        <button class="btn btn-win" onclick="risultato('${p}', 'WIN', ${player.puntata})">WIN</button>
-                        <button class="btn btn-lose" onclick="risultato('${p}', 'LOSE', ${player.puntata})">LOSE</button>
+                        <button class="btn btn-win" onclick="risultato('${p}', 'WIN', ${player.puntata})">VINTO</button>
+                        <button class="btn btn-lose" onclick="risultato('${p}', 'LOSE', ${player.puntata})">PERSO</button>
                     </div>`;
                 }
             });
@@ -146,11 +149,7 @@
         window.risultato = async function(pID, esito, pnt) {
             const snap = await get(ref(db, `stanze/${currentStanza}/giocatori/${pID}`));
             const cur = snap.val().fish;
-            let vince = 0;
-            if(esito === 'BJ') vince = Math.floor(pnt * 1.5);
-            else if(esito === 'WIN') vince = parseInt(pnt);
-            else vince = -parseInt(pnt);
-
+            let vince = (esito === 'BJ') ? Math.floor(pnt * 1.5) : (esito === 'WIN' ? parseInt(pnt) : -parseInt(pnt));
             update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { 
                 fish: cur + vince, 
                 puntata: 0, 
@@ -158,45 +157,50 @@
             });
         }
 
-        // --- FUNZIONI GIOCATORE ---
+        // --- GIOCATORE ---
         window.entraStanza = function() {
             username = document.getElementById('user-name').value;
-            if(!username) return alert("Inserisci un nome!");
+            if(!username) return alert("Metti un nome!");
             currentStanza = document.getElementById('join-id').value;
             myID = username + "_" + Math.floor(Math.random() * 999);
-            update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { nome: username, fish: 500, puntata: 0, mossa: "In attesa" });
+            update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { nome: username, fish: 500, puntata: 0, mossa: "Entrato" });
             document.getElementById('my-display-name').innerText = username;
             mostraSchermata('screen-giocatore');
             ascoltaStatoRound(currentStanza);
         }
 
         function ascoltaStatoRound(id) {
+            // Ascolta lo stato del round
             onValue(ref(db, `stanze/${id}/stato`), (snap) => {
                 const s = snap.val();
                 document.getElementById('round-status').innerText = s;
                 
                 if(s === 'PUNTATE') {
-                    // RESET FORZATO UI
-                    document.getElementById('area-puntata').classList.remove('hidden');
-                    document.getElementById('area-azioni').classList.add('hidden');
+                    // RESET TOTALE DELL'INTERFACCIA
                     document.getElementById('win-display').classList.add('hidden');
+                    document.getElementById('area-azioni').classList.add('hidden');
+                    document.getElementById('area-puntata').classList.remove('hidden');
                     tempBet = 0;
                     document.getElementById('current-bet').innerText = 0;
                 }
             });
 
+            // Ascolta i propri dati
             onValue(ref(db, `stanze/${id}/giocatori/${myID}`), (snap) => {
                 const data = snap.val();
                 if(!data) return;
                 myWallet = data.fish;
                 document.getElementById('my-money').innerText = myWallet;
                 
+                const winDisp = document.getElementById('win-display');
+                const areaP = document.getElementById('area-puntata');
+
+                // Mostra vincita SOLO se il banco ha pagato E non siamo in fase puntate
                 if(data.mossa && data.mossa.includes("PAGATO")) {
-                    const winDisp = document.getElementById('win-display');
                     winDisp.innerText = data.mossa;
                     winDisp.classList.remove('hidden');
+                    areaP.classList.add('hidden');
                     document.getElementById('area-azioni').classList.add('hidden');
-                    document.getElementById('area-puntata').classList.add('hidden');
                 }
             });
         }
