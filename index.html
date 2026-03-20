@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blackjack Deadland Edition</title>
+    <title>Blackjack Online</title>
     <style>
         :root { 
             --gold: #f1c40f; --table-green: #1a5e3a; --red: #e74c3c; 
@@ -22,224 +22,217 @@
         input { padding: 12px; border-radius: 8px; border: none; margin: 10px; text-align: center; width: 80%; max-width: 300px; font-size: 1rem; }
         .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.3); transition: 0.1s; }
         .chip:active { transform: translateY(3px); box-shadow: none; }
-        #win-display { font-size: 2.5rem; color: var(--gold); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 10px black; animation: pop 0.3s ease-out; }
-        @keyframes pop { 0% { transform: scale(0.8); } 100% { transform: scale(1); } }
+        #win-display { font-size: 2.5rem; color: var(--gold); font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 10px black; }
     </style>
 </head>
 <body>
 
-    <h1>🃏 Blackjack Deadland 🃏</h1>
+<h1>🃏 Blackjack Online 🃏</h1>
 
-    <div id="screen-home" class="card">
-        <input type="text" id="user-name" placeholder="IL TUO NOME">
+<div id="screen-home" class="card">
+    <input type="text" id="user-name" placeholder="IL TUO NOME">
+    <br>
+    <button class="btn btn-main" onclick="creaStanza()">CREA STANZA (BANCO)</button>
+    <hr style="opacity:0.2; margin: 20px;">
+    <input type="number" id="join-id" placeholder="ID 4 CIFRE">
+    <br>
+    <button class="btn btn-main" style="background:#9b59b6" onclick="entraStanza()">ENTRA IN STANZA</button>
+</div>
+
+<div id="screen-banco" class="hidden">
+    <div class="card">
+        <h2>BANCO - Stanza: <span id="display-id-banco" style="color:var(--gold)"></span></h2>
+        <button class="btn btn-banco" onclick="nuovoRound()">PROSSIMO ROUND</button>
+    </div>
+    <div id="lista-giocatori-banco"></div>
+</div>
+
+<div id="screen-giocatore" class="hidden">
+    <div class="card">
+        <h3><span id="my-display-name"></span> | Budget: <span id="my-money" style="color:var(--gold)">500</span>€</h3>
+        <p>Stato: <b id="round-status">IN ATTESA</b></p>
+    </div>
+    
+    <div id="win-display" class="hidden"></div>
+
+    <div id="area-puntata" class="hidden">
+        <div id="chips-container">
+            <div class="chip" style="background:white; color:black" onclick="aggiungiPuntata(1)">1</div>
+            <div class="chip" style="background:red" onclick="aggiungiPuntata(5)">5</div>
+            <div class="chip" style="background:blue" onclick="aggiungiPuntata(10)">10</div>
+            <div class="chip" style="background:green" onclick="aggiungiPuntata(20)">20</div>
+            <div class="chip" style="background:orange" onclick="aggiungiPuntata(50)">50</div>
+            <div class="chip" style="background:black" onclick="aggiungiPuntata(100)">100</div>
+        </div>
+        <h4>Puntata Corrente: <span id="current-bet">0</span>€</h4>
+        <button class="btn btn-bj" onclick="allIn()">ALL-IN</button>
+        <button class="btn btn-win" onclick="confermaPuntata()">CONFERMA</button>
         <br>
-        <button class="btn btn-main" onclick="creaStanza()">CREA STANZA (BANCO)</button>
-        <hr style="opacity:0.2; margin: 20px;">
-        <input type="number" id="join-id" placeholder="ID 4 CIFRE">
-        <br>
-        <button class="btn btn-main" style="background:#9b59b6" onclick="entraStanza()">ENTRA IN STANZA</button>
+        <button class="btn btn-lose" style="font-size:0.7rem; margin-top:10px" onclick="resetPuntataLocal()">RESET</button>
     </div>
 
-    <div id="screen-banco" class="hidden">
+    <div id="area-azioni" class="hidden">
         <div class="card">
-            <h2>BANCO - Stanza: <span id="display-id-banco" style="color:var(--gold)"></span></h2>
-            <button class="btn btn-banco" onclick="nuovoRound()">🔥 PROSSIMO ROUND 🔥</button>
-        </div>
-        <div id="lista-giocatori-banco"></div>
-    </div>
-
-    <div id="screen-giocatore" class="hidden">
-        <div class="card">
-            <h3><span id="my-display-name"></span> | Budget: <span id="my-money" style="color:var(--gold)">500</span>€</h3>
-            <p>Stato: <b id="round-status">IN ATTESA</b></p>
-        </div>
-        
-        <div id="win-display" class="hidden"></div>
-
-        <div id="area-puntata" class="hidden">
-            <div id="chips-container">
-                <div class="chip" style="background:white; color:black" onclick="aggiungiPuntata(1)">1</div>
-                <div class="chip" style="background:red" onclick="aggiungiPuntata(5)">5</div>
-                <div class="chip" style="background:blue" onclick="aggiungiPuntata(10)">10</div>
-                <div class="chip" style="background:green" onclick="aggiungiPuntata(20)">20</div>
-                <div class="chip" style="background:orange" onclick="aggiungiPuntata(50)">50</div>
-                <div class="chip" style="background:black" onclick="aggiungiPuntata(100)">100</div>
-            </div>
-            <h4>Puntata Corrente: <span id="current-bet">0</span>€</h4>
-            <button class="btn btn-bj" onclick="allIn()">ALL-IN 🚀</button>
-            <button class="btn btn-win" onclick="confermaPuntata()">CONFERMA PUNTATA</button>
-            <br>
-            <button class="btn btn-lose" style="font-size:0.7rem; margin-top:10px" onclick="resetPuntataLocal()">RESET FISH</button>
-        </div>
-
-        <div id="area-azioni" class="hidden">
-            <div class="card">
-                <p>Puntata inviata! Aspetta il Banco.</p>
-                <button class="btn btn-banco" onclick="mossaSpeciale('RADDOPPIA')">RADDOPPIA</button>
-                <button class="btn btn-banco" onclick="mossaSpeciale('ASSICURAZIONE')">ASSICURAZIONE</button>
-            </div>
+            <p>Puntata inviata! Aspetta il banco.</p>
+            <button class="btn btn-banco" onclick="mossaSpeciale('RADDOPPIA')">RADDOPPIA</button>
+            <button class="btn btn-banco" onclick="mossaSpeciale('ASSICURAZIONE')">ASSICURAZIONE</button>
         </div>
     </div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAbVr_9KaVqly_rEBOrS1HeAvl6HuvgmrA",
-            authDomain: "blackjackfish-322d3.firebaseapp.com",
-            projectId: "blackjackfish-322d3",
-            databaseURL: "https://blackjackfish-322d3-default-rtdb.europe-west1.firebasedatabase.app",
-            storageBucket: "blackjackfish-322d3.firebasestorage.app",
-            messagingSenderId: "1069692511591",
-            appId: "1:1069692511591:web:8cc83e24c442dc49a43bc2"
-        };
+const firebaseConfig = {
+    apiKey: "AIzaSyAbVr...",
+    authDomain: "blackjackfish-322d3.firebaseapp.com",
+    projectId: "blackjackfish-322d3",
+    databaseURL: "https://blackjackfish-322d3-default-rtdb.europe-west1.firebasedatabase.app",
+};
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-        let myID = "", username = "", currentStanza = "", myWallet = 500, tempBet = 0;
+let myID = "", username = "", currentStanza = "", myWallet = 500, tempBet = 0;
 
-        // --- BANCO ---
-        window.creaStanza = function() {
-            username = document.getElementById('user-name').value || "Banco";
-            const id = Math.floor(1000 + Math.random() * 9000).toString();
-            currentStanza = id;
-            set(ref(db, 'stanze/' + id), { id: id, stato: 'ATTESA', banco: username });
-            mostraSchermata('screen-banco');
-            document.getElementById('display-id-banco').innerText = id;
-            ascoltaGiocatori(id);
+// BANCO
+window.creaStanza = function() {
+    username = document.getElementById('user-name').value || "Banco";
+    const id = Math.floor(1000 + Math.random() * 9000).toString();
+    currentStanza = id;
+    set(ref(db, 'stanze/' + id), { id: id, stato: 'ATTESA', banco: username });
+    mostraSchermata('screen-banco');
+    document.getElementById('display-id-banco').innerText = id;
+    ascoltaGiocatori(id);
+}
+
+window.nuovoRound = async function() {
+    const snap = await get(ref(db, `stanze/${currentStanza}/giocatori`));
+    const players = snap.val();
+    if(players) {
+        const updates = {};
+        for(let p in players) {
+            updates[`stanze/${currentStanza}/giocatori/${p}/puntata`] = 0;
+            updates[`stanze/${currentStanza}/giocatori/${p}/mossa`] = "";
         }
+        await update(ref(db), updates);
+    }
+    await update(ref(db, 'stanze/' + currentStanza), { stato: 'PUNTATE' });
+}
 
-        window.nuovoRound = async function() {
-            // Sincronizzazione atomica: reset dei giocatori PRIMA di cambiare stato
-            const snap = await get(ref(db, `stanze/${currentStanza}/giocatori`));
-            const players = snap.val();
-            if(players) {
-                const updates = {};
-                for(let p in players) {
-                    updates[`stanze/${currentStanza}/giocatori/${p}/puntata`] = 0;
-                    updates[`stanze/${currentStanza}/giocatori/${p}/mossa`] = "In attesa...";
-                }
-                await update(ref(db), updates);
-            }
-            // Solo ora diciamo a tutti di puntare
-            await update(ref(db, 'stanze/' + currentStanza), { stato: 'PUNTATE' });
+function ascoltaGiocatori(id) {
+    onValue(ref(db, `stanze/${id}/giocatori`), (snapshot) => {
+        const list = document.getElementById('lista-giocatori-banco');
+        list.innerHTML = "";
+        const data = snapshot.val();
+        if(!data) return;
+        for(let p in data) {
+            const player = data[p];
+            list.innerHTML += `<div class="card">
+                <b>${player.nome}</b> [${player.fish}€] | Punta: <b>${player.puntata}€</b><br>
+                <i>${player.mossa}</i><br><br>
+                <button class="btn btn-bj" onclick="risultato('${p}', 'BJ', ${player.puntata})">BJ</button>
+                <button class="btn btn-win" onclick="risultato('${p}', 'WIN', ${player.puntata})">VINTO</button>
+                <button class="btn btn-lose" onclick="risultato('${p}', 'LOSE', ${player.puntata})">PERSO</button>
+            </div>`;
         }
+    });
+}
 
-        function ascoltaGiocatori(id) {
-            onValue(ref(db, `stanze/${id}/giocatori`), (snapshot) => {
-                const list = document.getElementById('lista-giocatori-banco');
-                list.innerHTML = "";
-                const data = snapshot.val();
-                if(!data) return;
-                for(let p in data) {
-                    const player = data[p];
-                    list.innerHTML += `<div class="card">
-                        <b>${player.nome}</b> [${player.fish}€] | Punta: <b>${player.puntata}€</b><br>
-                        <i>Mossa: ${player.mossa}</i><br><br>
-                        <button class="btn btn-bj" onclick="risultato('${p}', 'BJ', ${player.puntata})">BJ</button>
-                        <button class="btn btn-win" onclick="risultato('${p}', 'WIN', ${player.puntata})">VINTO</button>
-                        <button class="btn btn-lose" onclick="risultato('${p}', 'LOSE', ${player.puntata})">PERSO</button>
-                    </div>`;
-                }
-            });
-        }
+window.risultato = async function(pID, esito, pnt) {
+    const snap = await get(ref(db, `stanze/${currentStanza}/giocatori/${pID}`));
+    const cur = snap.val().fish;
+    let vince = (esito === 'BJ') ? Math.floor(pnt * 1.5) : (esito === 'WIN' ? parseInt(pnt) : -parseInt(pnt));
+    update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { 
+        fish: cur + vince, 
+        puntata: 0, 
+        mossa: "PAGATO: " + vince + "€" 
+    });
+}
 
-        window.risultato = async function(pID, esito, pnt) {
-            const snap = await get(ref(db, `stanze/${currentStanza}/giocatori/${pID}`));
-            const cur = snap.val().fish;
-            let vince = (esito === 'BJ') ? Math.floor(pnt * 1.5) : (esito === 'WIN' ? parseInt(pnt) : -parseInt(pnt));
-            update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { 
-                fish: cur + vince, 
-                puntata: 0, 
-                mossa: "PAGATO: " + vince + "€" 
-            });
-        }
+// GIOCATORE
+window.entraStanza = function() {
+    username = document.getElementById('user-name').value;
+    if(!username) return alert("Metti un nome!");
+    currentStanza = document.getElementById('join-id').value;
+    myID = username + "_" + Math.floor(Math.random() * 999);
+    update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { nome: username, fish: 500, puntata: 0, mossa: "" });
+    document.getElementById('my-display-name').innerText = username;
+    mostraSchermata('screen-giocatore');
+    ascoltaStatoRound(currentStanza);
+}
 
-        // --- GIOCATORE ---
-        window.entraStanza = function() {
-            username = document.getElementById('user-name').value;
-            if(!username) return alert("Metti un nome!");
-            currentStanza = document.getElementById('join-id').value;
-            myID = username + "_" + Math.floor(Math.random() * 999);
-            update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { nome: username, fish: 500, puntata: 0, mossa: "Entrato" });
-            document.getElementById('my-display-name').innerText = username;
-            mostraSchermata('screen-giocatore');
-            ascoltaStatoRound(currentStanza);
-        }
+function ascoltaStatoRound(id) {
 
-        function ascoltaStatoRound(id) {
-            // Ascolta lo stato del round
-            onValue(ref(db, `stanze/${id}/stato`), (snap) => {
-                const s = snap.val();
-                document.getElementById('round-status').innerText = s;
-                
-                if(s === 'PUNTATE') {
-                    // RESET TOTALE DELL'INTERFACCIA
-                    document.getElementById('win-display').classList.add('hidden');
-                    document.getElementById('area-azioni').classList.add('hidden');
-                    document.getElementById('area-puntata').classList.remove('hidden');
-                    tempBet = 0;
-                    document.getElementById('current-bet').innerText = 0;
-                }
-            });
+    onValue(ref(db, `stanze/${id}/stato`), (snap) => {
+        const s = snap.val();
+        document.getElementById('round-status').innerText = s;
 
-            // Ascolta i propri dati
-            onValue(ref(db, `stanze/${id}/giocatori/${myID}`), (snap) => {
-                const data = snap.val();
-                if(!data) return;
-                myWallet = data.fish;
-                document.getElementById('my-money').innerText = myWallet;
-                
-                const winDisp = document.getElementById('win-display');
-                const areaP = document.getElementById('area-puntata');
-
-                // Mostra vincita SOLO se il banco ha pagato E non siamo in fase puntate
-                if(data.mossa && data.mossa.includes("PAGATO")) {
-                    winDisp.innerText = data.mossa;
-                    winDisp.classList.remove('hidden');
-                    areaP.classList.add('hidden');
-                    document.getElementById('area-azioni').classList.add('hidden');
-                }
-            });
-        }
-
-        window.aggiungiPuntata = function(val) {
-            if(tempBet + val > myWallet) return;
-            tempBet += val;
-            document.getElementById('current-bet').innerText = tempBet;
-        }
-
-        window.allIn = function() {
-            tempBet = myWallet;
-            document.getElementById('current-bet').innerText = tempBet;
-            confermaPuntata();
-        }
-
-        window.resetPuntataLocal = function() {
+        if(s === 'PUNTATE') {
+            document.getElementById('win-display').classList.add('hidden');
+            document.getElementById('area-azioni').classList.add('hidden');
+            document.getElementById('area-puntata').classList.remove('hidden');
             tempBet = 0;
             document.getElementById('current-bet').innerText = 0;
         }
+    });
 
-        window.confermaPuntata = function() {
-            if(tempBet <= 0) return alert("Punta qualcosa!");
-            update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), {
-                puntata: tempBet,
-                mossa: "Ha puntato " + tempBet
-            });
+    onValue(ref(db, `stanze/${id}/giocatori/${myID}`), (snap) => {
+        const data = snap.val();
+        if(!data) return;
+
+        myWallet = data.fish;
+        document.getElementById('my-money').innerText = myWallet;
+
+        const stato = document.getElementById('round-status').innerText;
+        const winDisp = document.getElementById('win-display');
+
+        if(data.mossa && data.mossa.includes("PAGATO") && stato !== 'PUNTATE') {
+            winDisp.innerText = data.mossa;
+            winDisp.classList.remove('hidden');
             document.getElementById('area-puntata').classList.add('hidden');
-            document.getElementById('area-azioni').classList.remove('hidden');
+            document.getElementById('area-azioni').classList.add('hidden');
         }
+    });
+}
 
-        window.mossaSpeciale = function(m) {
-            update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { mossa: m });
-        }
+window.aggiungiPuntata = function(val) {
+    if(tempBet + val > myWallet) return;
+    tempBet += val;
+    document.getElementById('current-bet').innerText = tempBet;
+}
 
-        function mostraSchermata(id) {
-            document.querySelectorAll('div[id^="screen-"]').forEach(s => s.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-    </script>
+window.allIn = function() {
+    tempBet = myWallet;
+    document.getElementById('current-bet').innerText = tempBet;
+    confermaPuntata();
+}
+
+window.resetPuntataLocal = function() {
+    tempBet = 0;
+    document.getElementById('current-bet').innerText = 0;
+}
+
+window.confermaPuntata = function() {
+    if(tempBet <= 0) return alert("Punta qualcosa!");
+    update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), {
+        puntata: tempBet,
+        mossa: "Ha puntato " + tempBet
+    });
+    document.getElementById('area-puntata').classList.add('hidden');
+    document.getElementById('area-azioni').classList.remove('hidden');
+}
+
+window.mossaSpeciale = function(m) {
+    update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { mossa: m });
+}
+
+function mostraSchermata(id) {
+    document.querySelectorAll('div[id^="screen-"]').forEach(s => s.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
+</script>
+
 </body>
 </html>
