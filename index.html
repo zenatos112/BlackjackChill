@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack Deadland Edition</title>
+    <style>
+        :root { --gold: #f1c40f; --green: #27ae60; --red: #e74c3c; --dark: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; text-align: center; margin: 0; padding: 20px; }
+        .hidden { display: none; }
+        .btn { padding: 12px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .btn-main { background: var(--green); color: white; font-size: 1.2rem; }
+        .btn-banco { background: #3498db; color: white; }
+        .btn-win { background: var(--green); color: white; }
+        .btn-lose { background: var(--red); color: white; }
+        .btn-bj { background: var(--gold); color: black; }
+        .card { background: #2c3e50; padding: 20px; border-radius: 10px; margin: 10px auto; max-width: 500px; border: 1px solid #444; }
+        .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .chip:active { transform: scale(0.8); }
+        .status-tag { padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <h1>🃏 Blackjack Chill 🃏</h1>
+
+    <div id="screen-home">
+        <button class="btn btn-main" onclick="creaStanza()">CREA STANZA</button>
+        <br><br>
+        <input type="number" id="join-id" placeholder="ID 4 CIFRE">
+        <button class="btn btn-main" style="background:#9b59b6" onclick="entraStanza()">ENTRA IN STANZA</button>
+    </div>
+
+    <div id="screen-banco" class="hidden">
+        <h2>BANCO - Stanza: <span id="display-id-banco"></span></h2>
+        <button id="btn-start-round" class="btn btn-banco" onclick="setStatoRound('PUNTATE')">INIZIA ROUND (Puntate)</button>
+        <button class="btn btn-lose" onclick="setStatoRound('ATTESA')">RESET ROUND</button>
+        <hr>
+        <div id="lista-giocatori-banco"></div>
+    </div>
+
+    <div id="screen-giocatore" class="hidden">
+        <h3>Stanza: <span id="display-id-player"></span> | Budget: <span id="my-money" style="color:var(--gold)">500</span>€</h3>
+        <p>Stato: <b id="round-status">ATTESA</b></p>
+        
+        <div id="area-puntata">
+            <div id="chips-container">
+                <div class="chip" style="background:white; color:black" onclick="aggiungiPuntata(1)">1</div>
+                <div class="chip" style="background:red" onclick="aggiungiPuntata(5)">5</div>
+                <div class="chip" style="background:blue" onclick="aggiungiPuntata(10)">10</div>
+                <div class="chip" style="background:green" onclick="aggiungiPuntata(20)">20</div>
+                <div class="chip" style="background:orange" onclick="aggiungiPuntata(50)">50</div>
+                <div class="chip" style="background:black" onclick="aggiungiPuntata(100)">100</div>
+            </div>
+            <h4>Puntata Attuale: <span id="current-bet">0</span>€</h4>
+            <button id="btn-confirm-bet" class="btn btn-win" onclick="confermaPuntata()">CONFERMA PUNTATA</button>
+            <button class="btn btn-lose" onclick="resetPuntataLocal()">RESET</button>
+        </div>
+
+        <div id="area-azioni" class="hidden">
+            <button class="btn btn-banco" onclick="mossaSpeciale('ALL-IN')">ALL-IN</button>
+            <button class="btn btn-banco" onclick="mossaSpeciale('RADDOPPIA')">RADDOPPIA</button>
+            <button class="btn btn-banco" onclick="mossaSpeciale('ASSICURAZIONE')">ASSICURAZIONE</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAbVr_9KaVqly_rEBOrS1HeAvl6HuvgmrA",
+          authDomain: "blackjackfish-322d3.firebaseapp.com",
+          projectId: "blackjackfish-322d3",
+          storageBucket: "blackjackfish-322d3.firebasestorage.app",
+          messagingSenderId: "1069692511591",
+          appId: "1:1069692511591:web:8cc83e24c442dc49a43bc2",
+          measurementId: "G-WLGNT9T7KY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let myID = "";
+        let currentStanza = "";
+        let myWallet = 500;
+        let tempBet = 0;
+        let ruolo = ""; // "banco" o "player"
+
+        // --- LOGICA STANZA ---
+        window.creaStanza = function() {
+            const id = Math.floor(1000 + Math.random() * 9000).toString();
+            currentStanza = id;
+            ruolo = "banco";
+            set(ref(db, 'stanze/' + id), {
+                id: id,
+                stato: 'ATTESA',
+                timestamp: Date.now()
+            });
+            mostraSchermata('screen-banco');
+            document.getElementById('display-id-banco').innerText = id;
+            ascoltaGiocatori(id);
+        }
+
+        window.entraStanza = function() {
+            const id = document.getElementById('join-id').value;
+            if(id.length !== 4) return alert("Inserisci ID a 4 cifre!");
+            currentStanza = id;
+            ruolo = "player";
+            myID = "User_" + Math.floor(Math.random() * 1000);
+            
+            update(ref(db, `stanze/${id}/giocatori/${myID}`), {
+                nome: myID,
+                fish: 500,
+                puntata: 0,
+                mossa: "In attesa..."
+            });
+
+            mostraSchermata('screen-giocatore');
+            document.getElementById('display-id-player').innerText = id;
+            ascoltaStatoRound(id);
+        }
+
+        // --- FUNZIONI BANCO ---
+        window.setStatoRound = function(stato) {
+            update(ref(db, 'stanze/' + currentStanza), { stato: stato });
+            if(stato === 'PUNTATE') {
+                // Reset puntate precedenti per tutti
+                onValue(ref(db, `stanze/${currentStanza}/giocatori`), (snap) => {
+                    const players = snap.val();
+                    for(let p in players) {
+                        update(ref(db, `stanze/${currentStanza}/giocatori/${p}`), { puntata: 0, mossa: "Puntando..." });
+                    }
+                }, { onlyOnce: true });
+            }
+        }
+
+        function ascoltaGiocatori(id) {
+            onValue(ref(db, `stanze/${id}/giocatori`), (snapshot) => {
+                const list = document.getElementById('lista-giocatori-banco');
+                list.innerHTML = "";
+                const data = snapshot.val();
+                for(let p in data) {
+                    const player = data[p];
+                    list.innerHTML += `
+                        <div class="card">
+                            <b>${player.nome}</b> | Soldi: ${player.fish}€ | Puntata: <b style="color:var(--gold)">${player.puntata}€</b><br>
+                            <i>Mossa: ${player.mossa}</i><br><br>
+                            <button class="btn btn-bj" onclick="risultato('${p}', 'BJ', ${player.puntata})">BLACKJACK</button>
+                            <button class="btn btn-win" onclick="risultato('${p}', 'WIN', ${player.puntata})">VINTO</button>
+                            <button class="btn btn-lose" onclick="risultato('${p}', 'LOSE', ${player.puntata})">SBALLATO</button>
+                        </div>`;
+                }
+            });
+        }
+
+        window.risultato = function(pID, esito, pnt) {
+            const pRef = ref(db, `stanze/${currentStanza}/giocatori/${pID}`);
+            onValue(pRef, (snap) => {
+                let currentFish = snap.val().fish;
+                let vince = 0;
+                if(esito === 'BJ') vince = Math.floor(pnt * 1.5);
+                if(esito === 'WIN') vince = parseInt(pnt);
+                if(esito === 'LOSE') vince = -parseInt(pnt);
+                
+                update(pRef, { 
+                    fish: currentFish + vince, 
+                    puntata: 0, 
+                    mossa: "Fine Round" 
+                });
+            }, { onlyOnce: true });
+        }
+
+        // --- FUNZIONI GIOCATORE ---
+        function ascoltaStatoRound(id) {
+            onValue(ref(db, `stanze/${id}/stato`), (snap) => {
+                const s = snap.val();
+                document.getElementById('round-status').innerText = s;
+                const areaPuntata = document.getElementById('area-puntata');
+                const areaAzioni = document.getElementById('area-azioni');
+
+                if(s === 'PUNTATE') {
+                    areaPuntata.classList.remove('hidden');
+                    areaAzioni.classList.add('hidden');
+                    document.getElementById('btn-confirm-bet').disabled = false;
+                } else {
+                    areaPuntata.classList.add('hidden');
+                }
+            });
+
+            onValue(ref(db, `stanze/${id}/giocatori/${myID}/fish`), (snap) => {
+                myWallet = snap.val();
+                document.getElementById('my-money').innerText = myWallet;
+            });
+        }
+
+        window.aggiungiPuntata = function(val) {
+            if(tempBet + val > myWallet) return alert("Non hai abbastanza soldi, barbone!");
+            tempBet += val;
+            document.getElementById('current-bet').innerText = tempBet;
+        }
+
+        window.resetPuntataLocal = function() {
+            tempBet = 0;
+            document.getElementById('current-bet').innerText = 0;
+        }
+
+        window.confermaPuntata = function() {
+            if(tempBet <= 0) return alert("Punta qualcosa!");
+            update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), {
+                puntata: tempBet,
+                mossa: "Ha puntato " + tempBet
+            });
+            document.getElementById('btn-confirm-bet').disabled = true;
+            document.getElementById('area-azioni').classList.remove('hidden');
+        }
+
+        window.mossaSpeciale = function(m) {
+            update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { mossa: m });
+            alert("Mossa inviata: " + m);
+        }
+
+        function mostraSchermata(id) {
+            document.getElementById('screen-home').classList.add('hidden');
+            document.getElementById('screen-banco').classList.add('hidden');
+            document.getElementById('screen-giocatore').classList.add('hidden');
+            document.getElementById(id).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
