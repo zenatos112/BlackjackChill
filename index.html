@@ -3,54 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlackJack</title>
+    <title>BlackJack Online - Admin Panel</title>
     <style>
         :root { 
             --gold: #f1c40f; --table-green: #1a5e3a; --red: #e74c3c; 
-            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.6);
+            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.7);
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--table-green); color: white; text-align: center; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
-        .card { background: var(--ui-panel); padding: 20px; border-radius: 15px; margin: 15px auto; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-        .btn { padding: 12px 20px; margin: 5px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; }
+        .card { background: var(--ui-panel); padding: 20px; border-radius: 15px; margin: 15px auto; max-width: 500px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        
+        /* Bottoni */
+        .btn { padding: 12px 20px; margin: 5px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s; display: inline-block; }
         .btn:active { transform: scale(0.95); }
         .btn-main { background: #2ecc71; color: white; box-shadow: 0 4px #27ae60; }
         .btn-banco { background: #3498db; color: white; box-shadow: 0 4px #2980b9; }
         .btn-danger { background: var(--red); color: white; box-shadow: 0 4px #c0392b; }
-        .btn-win { background: #27ae60; color: white; }
-        .btn-lose { background: var(--red); color: white; }
-        .btn-bj { background: var(--gold); color: black; }
+        .btn-win { background: #27ae60; color: white; flex: 1; }
+        .btn-lose { background: var(--red); color: white; flex: 1; }
+        .btn-bj { background: var(--gold); color: black; flex: 1; }
+        .btn-sm { padding: 5px 10px; font-size: 0.75rem; }
+
+        input { padding: 12px; border-radius: 8px; border: none; margin: 10px; text-align: center; width: 80%; max-width: 300px; font-size: 1rem; }
         
-        input { padding: 12px; border-radius: 8px; border: none; margin: 10px; text-align: center; width: 80%; max-width: 300px; font-size: 1rem; background: rgba(255,255,255,0.9); color: black; }
+        .chip { width: 55px; height: 55px; border-radius: 50%; border: 3px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; transition: 0.1s; }
         
-        .chip { width: 60px; height: 60px; border-radius: 50%; border: 4px dashed white; display: inline-flex; align-items: center; justify-content: center; margin: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.3); transition: 0.1s; }
-        .chip:active { transform: translateY(3px); box-shadow: none; }
-        
-        #win-display { font-size: 2.2rem; font-weight: 900; margin: 20px 0; text-shadow: 2px 2px 10px black; }
-        .win-text { color: var(--gold); }
+        #win-display { font-size: 2rem; font-weight: 900; margin: 20px 0; }
+        .win-text { color: var(--gold); animation: pulse 1s infinite; }
         .lose-text { color: var(--red); }
-        .mossa-tag { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+        .mossa-tag { background: #34495e; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; color: #ecf0f1; }
+
+        .player-row { display: flex; gap: 5px; margin-top: 10px; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
-    <h1>🃏 BlackJack 🃏</h1>
+    <h1>🃏 BLACKJACK LIVE 🃏</h1>
 
     <div id="screen-home" class="card">
-        <input type="text" id="user-name" placeholder="IL TUO NOME">
+        <input type="text" id="user-name" placeholder="IL TUO NOME (es. Kevin)">
         <br>
         <button class="btn btn-main" onclick="creaStanza()">CREA STANZA (BANCO)</button>
         <hr style="opacity:0.2; margin: 20px;">
         <input type="number" id="join-id" placeholder="ID 4 CIFRE">
         <br>
-        <button class="btn btn-banco" onclick="entraStanza()">ENTRA IN STANZA</button>
+        <button class="btn btn-banco" onclick="entraStanza()">ENTRA COME GIOCATORE</button>
     </div>
 
     <div id="screen-banco" class="hidden">
         <div class="card">
-            <h2>BANCO - Stanza: <span id="display-id-banco" style="color:var(--gold)"></span></h2>
-            <button class="btn btn-danger" onclick="pulisciTavolo()">🧹 1. PULISCI TAVOLO</button>
-            <button class="btn btn-main" onclick="apriPuntate()">💰 2. APRI PUNTATE</button>
+            <h2 style="margin:0">STANZA: <span id="display-id-banco" style="color:var(--gold)">----</span></h2>
+            <p id="banco-status-label" style="font-size:0.8rem; opacity:0.7">IDLE</p>
+            <div style="display:flex; justify-content: center; gap: 10px;">
+                <button class="btn btn-danger btn-sm" onclick="pulisciTavolo()">🧹 RESET</button>
+                <button class="btn btn-main btn-sm" onclick="apriPuntate()">💰 APRI PUNTATE</button>
+            </div>
         </div>
         <div id="lista-giocatori-banco"></div>
     </div>
@@ -63,33 +71,30 @@
         
         <div id="win-display" class="hidden"></div>
 
-        <div id="area-puntata" class="hidden">
+        <div id="area-puntata" class="hidden card">
             <div id="chips-container">
-                <div class="chip" style="background:white; color:black" onclick="aggiungiPuntata(1)">1</div>
-                <div class="chip" style="background:red" onclick="aggiungiPuntata(5)">5</div>
-                <div class="chip" style="background:blue" onclick="aggiungiPuntata(10)">10</div>
-                <div class="chip" style="background:green" onclick="aggiungiPuntata(20)">20</div>
-                <div class="chip" style="background:orange" onclick="aggiungiPuntata(50)">50</div>
+                <div class="chip" style="background:white; color:black" onclick="aggiungiPuntata(5)">5</div>
+                <div class="chip" style="background:red" onclick="aggiungiPuntata(10)">10</div>
+                <div class="chip" style="background:blue" onclick="aggiungiPuntata(25)">25</div>
                 <div class="chip" style="background:black" onclick="aggiungiPuntata(100)">100</div>
             </div>
-            <h4>Puntata Corrente: <span id="current-bet">0</span>€</h4>
-            <button class="btn btn-bj" onclick="doAllIn()">ALL-IN 🔥</button>
-            <button class="btn btn-win" onclick="confermaPuntata()">CONFERMA PUNTATA ✅</button>
-            <button class="btn btn-danger" style="font-size:0.7rem" onclick="resetPuntataLocal()">RESET</button>
+            <h4>Puntata: <span id="current-bet">0</span>€</h4>
+            <button class="btn btn-win" onclick="confermaPuntata()">CONFERMA ✅</button>
+            <button class="btn btn-danger btn-sm" onclick="resetPuntataLocal()">RESET</button>
         </div>
 
         <div id="area-wait" class="hidden card">
-            <p>Puntata inviata: <b id="display-confirmed-bet">0</b>€</p>
-            <button id="btn-raddoppia" class="btn btn-bj" onclick="doRaddoppia()">RADDOPPIA 2x</button>
-            <button id="btn-assicura" class="btn btn-banco" onclick="doAssicurazione()">ASSICURAZIONE 🛡️</button>
-            <p style="font-size: 0.8rem; opacity: 0.7;">Aspetta che il banco distribuisca o paghi.</p>
+            <p>In gioco con: <b id="display-confirmed-bet">0</b>€</p>
+            <button id="btn-raddoppia" class="btn btn-bj btn-sm" onclick="doRaddoppia()">RADDOPPIA 2x</button>
+            <p style="font-size: 0.8rem; opacity: 0.6; margin-top:15px;">Attendi l'esito dal banco...</p>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, update, onValue, get, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // CONFIGURAZIONE FIREBASE (Kevin, usa la tua!)
         const firebaseConfig = {
             apiKey: "AIzaSyAbVr_9KaVqly_rEBOrS1HeAvl6HuvgmrA",
             authDomain: "blackjackfish-322d3.firebaseapp.com",
@@ -104,7 +109,7 @@
         const db = getDatabase(app);
         let myID, currentStanza, wallet = 500, tempBet = 0, confirmedBet = 0;
 
-        // --- BANCO ---
+        // --- FUNZIONI BANCO ---
         window.creaStanza = function() {
             const id = Math.floor(1000 + Math.random() * 9000).toString();
             currentStanza = id;
@@ -133,21 +138,51 @@
             update(ref(db, `stanze/${currentStanza}`), { stato: 'PUNTATE' });
         }
 
+        window.modificaSoldi = async function(pID, delta) {
+            const snap = await get(ref(db, `stanze/${currentStanza}/giocatori/${pID}`));
+            if(snap.exists()){
+                const nuovoTotale = snap.val().fish + delta;
+                update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { fish: nuovoTotale });
+            }
+        }
+
         function ascoltaGiocatori(id) {
             onValue(ref(db, `stanze/${id}/giocatori`), (snap) => {
                 const list = document.getElementById('lista-giocatori-banco');
+                const labelStatus = document.getElementById('banco-status-label');
                 list.innerHTML = "";
                 const data = snap.val();
+
+                if(!data) {
+                    list.innerHTML = "<p style='opacity:0.5; margin-top:20px;'>In attesa di polli da spennare...</p>";
+                    return;
+                }
+
                 for(let p in data) {
-                    list.innerHTML += `<div class="card">
-                        <b>${data[p].nome}</b> (${data[p].fish}€)<br>
-                        Punta: <b style="color:var(--gold)">${data[p].puntata}€</b><br>
-                        Mossa: <span class="mossa-tag">${data[p].mossa}</span><br><br>
-                        <button class="btn btn-win" onclick="paga('${p}',${data[p].puntata},'Vinto')">WIN</button>
-                        <button class="btn btn-lose" onclick="paga('${p}',${data[p].puntata},'Perso')">LOSE</button>
-                        <button class="btn btn-bj" onclick="paga('${p}',${data[p].puntata},'BJ')">BJ</button>
+                    list.innerHTML += `
+                    <div class="card" style="border-left: 4px solid var(--gold); text-align: left; padding: 15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b style="font-size:1.1rem">${data[p].nome}</b>
+                            <span class="mossa-tag">${data[p].mossa}</span>
+                        </div>
+                        <p style="margin: 5px 0;">Budget: <b style="color:var(--gold)">${data[p].fish}€</b> | Punta: <b>${data[p].puntata}€</b></p>
+                        
+                        <div style="margin: 10px 0;">
+                            <button class="btn btn-sm" style="background:#8e44ad; color:white" onclick="modificaSoldi('${p}', 50)">+50€</button>
+                            <button class="btn btn-sm" style="background:#2c3e50; color:white" onclick="modificaSoldi('${p}', -50)">-50€</button>
+                        </div>
+
+                        <div class="player-row">
+                            <button class="btn btn-win btn-sm" onclick="paga('${p}',${data[p].puntata},'Vinto')">WIN</button>
+                            <button class="btn btn-lose btn-sm" onclick="paga('${p}',${data[p].puntata},'LOSE')">LOSE</button>
+                            <button class="btn btn-bj btn-sm" onclick="paga('${p}',${data[p].puntata},'BJ')">BJ</button>
+                        </div>
                     </div>`;
                 }
+            });
+
+            onValue(ref(db, `stanze/${id}/stato`), (snap) => {
+                document.getElementById('banco-status-label').innerText = "STATO: " + snap.val();
             });
         }
 
@@ -168,7 +203,7 @@
             } else if (esito === 'BJ') {
                 premio = Math.floor(pntInt * 1.5);
                 finale = cur + premio;
-                mossaTesto = `Pagato (+${premio}€)`;
+                mossaTesto = `Pagato BJ (+${premio}€)`;
             }
 
             update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { 
@@ -176,15 +211,22 @@
             });
         }
 
-        // --- GIOCATORE ---
+        // --- FUNZIONI GIOCATORE ---
         window.entraStanza = function() {
             const user = document.getElementById('user-name').value;
             currentStanza = document.getElementById('join-id').value;
-            if(!user || !currentStanza) return alert("Metti nome e ID!");
+            if(!user || !currentStanza) return alert("Hey! Nome e ID sono obbligatori!");
+
             myID = user + "_" + Math.floor(Math.random()*99);
-            set(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { 
+            const userRef = ref(db, `stanze/${currentStanza}/giocatori/${myID}`);
+
+            // LOGICA DISCONNESSIONE: Rimuove il giocatore se chiude il sito
+            onDisconnect(userRef).remove();
+
+            set(userRef, { 
                 nome: user, fish: 500, puntata: 0, mossa: 'Entrato', ultimoPremio: 0 
             });
+
             document.getElementById('my-display-name').innerText = user;
             mostraSchermata('screen-giocatore');
             ascoltaStato(currentStanza);
@@ -201,7 +243,6 @@
                     tempBet = 0;
                     document.getElementById('current-bet').innerText = 0;
                     document.getElementById('btn-raddoppia').classList.remove('hidden');
-                    document.getElementById('btn-assicura').classList.remove('hidden');
                 } else if (s === 'RESET') {
                     document.getElementById('win-display').classList.add('hidden');
                     document.getElementById('area-puntata').classList.add('hidden');
@@ -222,11 +263,11 @@
                     wd.classList.remove('hidden');
                     const p = parseInt(d.ultimoPremio);
                     if (p > 0) {
-                        wd.innerHTML = `<span class="win-text">VINTI: +${p}€</span>`;
+                        wd.innerHTML = `<span class="win-text">HAI VINTO: +${p}€! 🤑</span>`;
                     } else if (p < 0) {
-                        wd.innerHTML = `<span class="lose-text">PERSO: ${p}€</span>`;
+                        wd.innerHTML = `<span class="lose-text">HAI PERSO: ${p}€ 💀</span>`;
                     } else {
-                        wd.innerHTML = `Puntata Rimborsata`;
+                        wd.innerHTML = `PAREGGIO (Puntata restituita)`;
                     }
                     document.getElementById('area-puntata').classList.add('hidden');
                     document.getElementById('area-wait').classList.add('hidden');
@@ -236,11 +277,9 @@
 
         window.aggiungiPuntata = (v) => { if(tempBet+v <= wallet) { tempBet+=v; document.getElementById('current-bet').innerText = tempBet; } };
         window.resetPuntataLocal = () => { tempBet = 0; document.getElementById('current-bet').innerText = 0; };
-        
-        window.doAllIn = () => { tempBet = wallet; document.getElementById('current-bet').innerText = tempBet; };
 
         window.confermaPuntata = function() {
-            if(tempBet <= 0) return alert("Punta qualcosa!");
+            if(tempBet <= 0) return alert("Non fare il braccino corto, punta!");
             update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { puntata: tempBet, mossa: 'In Gioco' });
             document.getElementById('area-puntata').classList.add('hidden');
             document.getElementById('area-wait').classList.remove('hidden');
@@ -249,24 +288,13 @@
         window.doRaddoppia = function() {
             if(confirmedBet * 2 <= wallet) {
                 const nuovaPuntata = confirmedBet * 2;
-                update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { puntata: nuovaPuntata, mossa: 'RADDOPPIO 2x' });
+                update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { puntata: nuovaPuntata, mossa: 'RADDOPPIO 🔥' });
                 document.getElementById('btn-raddoppia').classList.add('hidden');
-            } else { alert("Soldi insufficienti!"); }
-        }
-
-        window.doAssicurazione = function() {
-            const extra = Math.floor(confirmedBet / 2);
-            if(confirmedBet + extra <= wallet) {
-                const nuovaPuntata = confirmedBet + extra;
-                update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { puntata: nuovaPuntata, mossa: 'ASSICURAZIONE (+50%)' });
-                document.getElementById('btn-assicura').classList.add('hidden');
-            } else { alert("Soldi insufficienti!"); }
+            } else { alert("Niente cash per raddoppiare!"); }
         }
 
         function mostraSchermata(id) {
-            document.getElementById('screen-home').classList.add('hidden');
-            document.getElementById('screen-banco').classList.add('hidden');
-            document.getElementById('screen-giocatore').classList.add('hidden');
+            document.querySelectorAll('body > div').forEach(div => div.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
     </script>
