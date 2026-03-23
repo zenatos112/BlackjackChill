@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlackJack Online - Ultimate</title>
+    <title>BlackJack Online - Casino Master</title>
     <style>
         :root { 
             --gold: #f1c40f; --table-green: #1a5e3a; --red: #e74c3c; 
-            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.8);
+            --dark-green: #0b2b1a; --ui-panel: rgba(0, 0, 0, 0.85);
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--table-green); color: white; text-align: center; margin: 0; padding: 20px; }
         .hidden { display: none !important; }
@@ -23,6 +23,10 @@
         .btn-bj { background: var(--gold); color: black; }
         .btn-sm { padding: 6px 10px; font-size: 0.7rem; }
 
+        /* Stile speciale per i tastini cassa del banco */
+        .btn-money { padding: 4px 8px; font-size: 0.65rem; margin: 2px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: #34495e; color: white; }
+        .btn-money:hover { background: #2c3e50; }
+
         input { padding: 12px; border-radius: 8px; border: none; margin: 10px; text-align: center; width: 85%; max-width: 300px; }
         
         .chip { width: 48px; height: 48px; border-radius: 50%; border: 3px dashed rgba(255,255,255,0.7); display: inline-flex; align-items: center; justify-content: center; margin: 4px; cursor: pointer; font-weight: 900; font-size: 0.8rem; box-shadow: 0 4px 0 rgba(0,0,0,0.3); }
@@ -31,7 +35,6 @@
         .win-text { color: var(--gold); }
         .lose-text { color: var(--red); }
         .mossa-tag { background: #34495e; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; }
-
         .btn-action-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 10px; }
     </style>
 </head>
@@ -112,7 +115,7 @@
         const db = getDatabase(app);
         let myID, currentStanza, wallet = 500, tempBet = 0, confirmedBet = 0;
 
-        // --- BANCO ---
+        // --- LOGICA BANCO ---
         window.creaStanza = function() {
             const id = Math.floor(1000 + Math.random() * 9000).toString();
             currentStanza = id;
@@ -124,7 +127,11 @@
 
         window.modificaSoldi = async function(pID, delta) {
             const snap = await get(ref(db, `stanze/${currentStanza}/giocatori/${pID}`));
-            if(snap.exists()) update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { fish: snap.val().fish + delta });
+            if(snap.exists()) {
+                let nuovoVal = snap.val().fish + delta;
+                if(nuovoVal < 0) nuovoVal = 0; // Evitiamo debiti
+                update(ref(db, `stanze/${currentStanza}/giocatori/${pID}`), { fish: nuovoVal });
+            }
         }
 
         function ascoltaGiocatori(id) {
@@ -132,17 +139,32 @@
                 const list = document.getElementById('lista-giocatori-banco');
                 list.innerHTML = "";
                 const data = snap.val();
-                if(!data) return list.innerHTML = "<p style='opacity:0.5'>Nessun giocatore</p>";
+                if(!data) return list.innerHTML = "<p style='opacity:0.5'>Nessun giocatore in attesa</p>";
 
                 for(let p in data) {
                     list.innerHTML += `
                     <div class="card" style="border-left: 4px solid var(--gold); text-align: left; padding: 12px;">
                         <b>${data[p].nome}</b> <span class="mossa-tag">${data[p].mossa}</span><br>
                         Budget: <b style="color:var(--gold)">${data[p].fish}€</b> | Punta: <b>${data[p].puntata}€</b>
-                        <div style="margin: 8px 0;">
-                            <button class="btn btn-sm" style="background:#8e44ad" onclick="modificaSoldi('${p}', 50)">+50€</button>
-                            <button class="btn btn-sm" style="background:#2c3e50" onclick="modificaSoldi('${p}', -50)">-50€</button>
+                        
+                        <div style="margin: 10px 0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+                            <span style="font-size:0.7rem; opacity:0.7">AGGIUNGI:</span><br>
+                            <button class="btn-money" onclick="modificaSoldi('${p}', 1)">+1</button>
+                            <button class="btn-money" onclick="modificaSoldi('${p}', 5)">+5</button>
+                            <button class="btn-money" onclick="modificaSoldi('${p}', 10)">+10</button>
+                            <button class="btn-money" onclick="modificaSoldi('${p}', 25)">+25</button>
+                            <button class="btn-money" onclick="modificaSoldi('${p}', 50)">+50</button>
+                            <button class="btn-money" onclick="modificaSoldi('${p}', 100)">+100</button>
+                            <br>
+                            <span style="font-size:0.7rem; opacity:0.7">TOGLI:</span><br>
+                            <button class="btn-money" style="color:var(--red)" onclick="modificaSoldi('${p}', -1)">-1</button>
+                            <button class="btn-money" style="color:var(--red)" onclick="modificaSoldi('${p}', -5)">-5</button>
+                            <button class="btn-money" style="color:var(--red)" onclick="modificaSoldi('${p}', -10)">-10</button>
+                            <button class="btn-money" style="color:var(--red)" onclick="modificaSoldi('${p}', -25)">-25</button>
+                            <button class="btn-money" style="color:var(--red)" onclick="modificaSoldi('${p}', -50)">-50</button>
+                            <button class="btn-money" style="color:var(--red)" onclick="modificaSoldi('${p}', -100)">-100</button>
                         </div>
+
                         <div style="display:flex; gap:5px;">
                             <button class="btn btn-win btn-sm" style="flex:1" onclick="paga('${p}',${data[p].puntata},'Vinto')">WIN</button>
                             <button class="btn btn-lose btn-sm" style="flex:1" onclick="paga('${p}',${data[p].puntata},'Perso')">LOSE</button>
@@ -172,11 +194,11 @@
         window.pulisciTavolo = () => update(ref(db, `stanze/${currentStanza}`), { stato: 'RESET' });
         window.apriPuntate = () => update(ref(db, `stanze/${currentStanza}`), { stato: 'PUNTATE' });
 
-        // --- GIOCATORE ---
+        // --- LOGICA GIOCATORE ---
         window.entraStanza = function() {
             const user = document.getElementById('user-name').value;
             currentStanza = document.getElementById('join-id').value;
-            if(!user || !currentStanza) return alert("Inserisci dati!");
+            if(!user || !currentStanza) return alert("Dati mancanti!");
 
             myID = user + "_" + Math.floor(Math.random()*99);
             const userRef = ref(db, `stanze/${currentStanza}/giocatori/${myID}`);
@@ -198,6 +220,7 @@
                     document.getElementById('area-puntata').classList.remove('hidden');
                     document.getElementById('btn-assicura').classList.remove('hidden');
                     document.getElementById('btn-split').classList.remove('hidden');
+                    document.getElementById('btn-raddoppia').classList.remove('hidden');
                     tempBet = 0; document.getElementById('current-bet').innerText = 0;
                 } else if (s === 'RESET') {
                     document.getElementById('win-display').classList.add('hidden');
@@ -216,7 +239,7 @@
                     const wd = document.getElementById('win-display');
                     wd.classList.remove('hidden');
                     const p = parseInt(d.ultimoPremio);
-                    wd.innerHTML = p > 0 ? `<span class="win-text">VINTO: +${p}€! 🍀</span>` : `<span class="lose-text">PERSO: ${p}€ 🛑</span>`;
+                    wd.innerHTML = p > 0 ? `<span class="win-text">VITTORIA: +${p}€! 🍀</span>` : `<span class="lose-text">SCONFITTA: ${p}€ 🛑</span>`;
                     document.getElementById('area-puntata').classList.add('hidden');
                     document.getElementById('area-wait').classList.add('hidden');
                 }
@@ -238,7 +261,7 @@
             if(confirmedBet * 2 <= wallet) {
                 update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { puntata: confirmedBet * 2, mossa: 'RADDOPPIO 🔥' });
                 document.getElementById('btn-raddoppia').classList.add('hidden');
-            } else alert("Cash insufficiente!");
+            } else alert("Budget scarso!");
         };
 
         window.doAssicurazione = () => {
@@ -246,14 +269,14 @@
             if(confirmedBet + extra <= wallet) {
                 update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { puntata: confirmedBet + extra, mossa: 'ASSICURAZIONE 🛡️' });
                 document.getElementById('btn-assicura').classList.add('hidden');
-            } else alert("Cash insufficiente!");
+            } else alert("Budget scarso!");
         };
 
         window.doSplit = () => {
             if(confirmedBet * 2 <= wallet) {
                 update(ref(db, `stanze/${currentStanza}/giocatori/${myID}`), { puntata: confirmedBet * 2, mossa: 'SPLIT ✂️' });
                 document.getElementById('btn-split').classList.add('hidden');
-            } else alert("Cash insufficiente!");
+            } else alert("Budget scarso!");
         };
 
         function mostraSchermata(id) {
